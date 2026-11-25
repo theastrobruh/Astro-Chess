@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/v021-desktop-01-home.png" alt="Astro Chess — Home Screen" width="720"/>
+<img src="docs/ui-revision-v021/v021-desktop-01-home.png" alt="Astro Chess — Home Screen" width="720"/>
 
 <br/>
 
@@ -35,9 +35,9 @@ Cuenta con un ritmo vibrante, **efectos sonoros sintetizados** para cada pieza, 
 
 | Home | La Plaza | Partida |
 |:---:|:---:|:---:|
-| <img src="docs/v021-desktop-01-home.png" width="260"> | <img src="docs/v021-desktop-07-plaza.png" width="260"> | <img src="docs/v021-desktop-11-game-moves.png" width="260"> |
+| <img src="docs/ui-revision-v021/v021-desktop-01-home.png" width="260"> | <img src="docs/ui-revision-v021/v021-desktop-07-plaza.png" width="260"> | <img src="docs/ui-revision-v021/v021-desktop-11-game-moves.png" width="260"> |
 | **Game Over** | **Trading Card** | **Review Mode** |
-| <img src="docs/v021-desktop-13-gameover.png" width="260"> | <img src="docs/v021-desktop-14-trading-card.png" width="260"> | <img src="docs/v021-desktop-17-review-mode.png" width="260"> |
+| <img src="docs/ui-revision-v021/v021-desktop-13-gameover.png" width="260"> | <img src="docs/ui-revision-v021/v021-desktop-14-trading-card.png" width="260"> | <img src="docs/ui-revision-v021/v021-desktop-17-review-mode.png" width="260"> |
 
 </div>
 
@@ -48,7 +48,7 @@ Cuenta con un ritmo vibrante, **efectos sonoros sintetizados** para cada pieza, 
 
 | Home | Tablero | La Plaza | Game Over |
 |:---:|:---:|:---:|:---:|
-| <img src="docs/v021-mobile-01-home.png" width="180"> | <img src="docs/v021-mobile-10-game-start.png" width="180"> | <img src="docs/v021-mobile-07-plaza.png" width="180"> | <img src="docs/v021-mobile-13-gameover.png" width="180"> |
+| <img src="docs/ui-revision-v021/v021-mobile-01-home.png" width="180"> | <img src="docs/ui-revision-v021/v021-mobile-10-game-start.png" width="180"> | <img src="docs/ui-revision-v021/v021-mobile-07-plaza.png" width="180"> | <img src="docs/ui-revision-v021/v021-mobile-13-gameover.png" width="180"> |
 
 </div>
 </details>
