@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Astro~Chess</title>
+  <script>
+    // GitHub Pages SPA redirect — preserves path and query
+    const path = window.location.pathname;
+    const query = window.location.search;
+    const hash = window.location.hash;
+    // Redirect to index with the path encoded in the query string
+    window.location.replace(
+      window.location.origin + '/?p=' + encodeURIComponent(path + query) + hash
+    );
+  </script>
+</head>
+<body>
+  <p>Redirigiendo a Astro~Chess…</p>
+</body>
+</html>
