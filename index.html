@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Astro~Chess</title>
+    <meta name="description" content="Astro~Chess v.022 — A premium cosmic chess experience: royal announcer, achievements, rich stats, starfield visuals, Elo ratings, game history and CPU opponents with unique personalities.">
+    <meta name="theme-color" content="#06061a">
+    <meta name="color-scheme" content="dark">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Astro Chess">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/screens.css">
+    <link rel="stylesheet" href="css/board.css">
+    <link rel="stylesheet" href="css/modals.css">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="css/plaza.css">
+    <link rel="stylesheet" href="css/announcer.css">
+    <!-- ★ Cosmic Royal layer — must load last so it can finish every surface -->
+    <link rel="stylesheet" href="css/theme.css">
+    <!-- Umami Analytics -->
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="d4a93199-03b6-4bd3-82e9-b038ec390467"></script>
+</head>
+<body>
+
+    <!-- ══ Starfield Background Layer ══════════════════════ -->
+    <canvas id="starfield" aria-hidden="true"></canvas>
+    <canvas id="cosmic-dust" aria-hidden="true"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <!-- ══ Boot skeleton — first paint, replaced by the loader ══ -->
+    <div id="boot-skeleton" class="boot-skeleton" role="status" aria-label="Iniciando Astro Chess">
+        <div class="bs-emblem"><i class="fa-solid fa-chess-knight" aria-hidden="true"></i></div>
+        <div class="bs-bar"></div>
+        <div class="bs-text">Preparando el cosmos…</div>
+    </div>
+
+    <!-- ══ Global Music FAB (Disco Flotante) ════════════════════ -->
+    <button type="button" id="global-music-fab" class="global-audio-widget" aria-label="Ajustes de audio" aria-expanded="false" aria-controls="global-audio-panel">
+        <i class="fa-solid fa-music" aria-hidden="true"></i>
+    </button>
+    <div id="global-audio-panel" class="global-audio-panel hidden" role="group" aria-label="Ajustes de audio">
+        <div class="ctrl-dropdown-label" style="margin-bottom:10px;">🎵 Audio Settings</div>
+        <div style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+            <span id="audio-track-name" style="font-size: 0.72rem; color: var(--accent-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">---</span>
+            <div style="display: flex; gap: 6px;">
+                <button id="btn-audio-prev" class="btn-audio-small"><i class="fa-solid fa-backward-step"></i></button>
+                <button id="btn-audio-next" class="btn-audio-small"><i class="fa-solid fa-forward-step"></i></button>
+            </div>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <label style="font-size: 0.65rem; color: var(--text-soft); font-weight: bold; display: flex; justify-content: space-between;">
+                Música <button id="btn-audio-mute" style="background: none; border: none; color: inherit; cursor: pointer;"><i class="fa-solid fa-volume-high" id="icon-audio-mute"></i></button>
+            </label>
+            <input type="range" id="audio-music-slider" min="0" max="1" step="0.05" value="0.5" style="width: 100%;">
+        </div>
+        <div>
+            <label style="font-size: 0.65rem; color: var(--text-soft); font-weight: bold;">Efectos (SFX)</label>
+            <input type="range" id="audio-sfx-slider" min="0" max="1" step="0.05" value="0.8" style="width: 100%;">
+        </div>
+    </div>
+    <div id="toast-container"></div>
+
+    <!-- ══ SCREEN 1: Home / Main Menu ═══════════════════════ -->
+    <div id="home-screen" class="screen hidden">
+
+        <!-- Logo + Dynamic Phrases -->
+        <div class="title-container">
+            <h1 class="main-title">
+                <i class="fa-solid fa-chess-knight title-icon left-icon"></i>
+                <div class="title-text-stack">
+                    <span class="title-astro">Astro</span>
+                    <span class="title-chess">Chess</span>
+                </div>
+                <i class="fa-solid fa-wand-magic-sparkles title-spark-emoji"></i>
+            </h1>
+            <span class="version-badge">v.022</span>
+            <p class="subtitle" id="dynamic-tips">Chess · Elo · History · CPU</p>
+        </div>
+
+        <!-- Profile Widget + Dynamic Greeting -->
+        <div class="home-profile-group">
+            <!-- Dynamic Greeting -->
+            <div id="dynamic-greeting" class="dynamic-greeting"></div>
+
+            <div class="profile-widget" id="profile-widget">
+                <!-- Rendered by UI.updateProfileCard() -->
+            </div>
+        </div>
+
+        <!-- ══ Home Parallax Hero ═══════════════════════════════ -->
+        <div id="home-parallax-hero" class="home-parallax-hero" aria-label="Chess news and stats">
+            <!-- Parallax depth layers -->
+            <div class="parallax-layer parallax-bg"></div>
+            <div class="parallax-layer parallax-mid"></div>
+            <!-- Slides container -->
+            <div class="parallax-slides" id="parallax-slides">
+
+                <!-- Slide 1: Global ELO Ranking -->
+                <div class="parallax-slide active" data-slide="0">
+                    <div class="slide-label">🏆 Top ELO Global · FIDE 2025</div>
+                    <div class="slide-elo-list">
+                        <div class="elo-rank-row">
+                            <span class="elo-pos">1</span>
+                            <span class="elo-flag">🇳🇴</span>
+                            <span class="elo-name">Carlsen</span>
+                            <span class="elo-score">2830</span>
+                        </div>
+                        <div class="elo-rank-row">
+                            <span class="elo-pos">2</span>
+                            <span class="elo-flag">🇺🇸</span>
+                            <span class="elo-name">Caruana</span>
+                            <span class="elo-score">2811</span>
+                        </div>
+                        <div class="elo-rank-row">
+                            <span class="elo-pos">3</span>
+                            <span class="elo-flag">🇨🇳</span>
+                            <span class="elo-name">Ding Liren</span>
+                            <span class="elo-score">2762</span>
+                        </div>
+                        <div class="elo-rank-row">
+                            <span class="elo-pos">4</span>
+                            <span class="elo-flag">🇮🇳</span>
+                            <span class="elo-name">Pragg</span>
+                            <span class="elo-score">2756</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Plaza Roster -->
+                <div class="parallax-slide" data-slide="1">
+                    <div class="slide-label">¿Quién está en La Plaza?</div>
+                    <div class="slide-plaza-roster" id="parallax-plaza-roster">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Slide 3: Chess curiosity / quote -->
+                <div class="parallax-slide" data-slide="2">
+                    <div class="slide-label">💡 Chess Curiosidades</div>
+                    <div class="slide-curiosity" id="parallax-curiosity">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Slide 4: Player personal stats -->
+                <div class="parallax-slide" data-slide="3">
+                    <div class="slide-label">⭐ Tu Progreso</div>
+                    <div class="slide-progress" id="parallax-progress">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Navigation dots -->
+            <div class="parallax-dots" id="parallax-dots">
+                <button class="parallax-dot active" data-dot="0" aria-label="Slide 1"></button>
+                <button class="parallax-dot" data-dot="1" aria-label="Slide 2"></button>
+                <button class="parallax-dot" data-dot="2" aria-label="Slide 3"></button>
+                <button class="parallax-dot" data-dot="3" aria-label="Slide 4"></button>
+            </div>
+        </div>
+
+        <!-- Controls centre group -->
+        <div class="home-center-group">
+
+            <!-- Icon triggers for Time Control & Skin -->
+            <div class="home-control-row">
+
+                <!-- Time Control trigger -->
+                <div class="ctrl-trigger" id="ctrl-time-trigger" role="button" tabindex="0"
+                     aria-haspopup="true" aria-expanded="false" aria-controls="ctrl-time-dropdown"
+                     aria-label="Control de tiempo">
+                    <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                    <span>Time</span>
+                    <span class="ctrl-current-val" id="ctrl-time-val">10 min</span>
+                    <!-- Dropdown -->
+                    <div class="ctrl-dropdown hidden" id="ctrl-time-dropdown" role="group" aria-label="Control de tiempo">
+                        <div class="ctrl-dropdown-label">⏱ Time Control</div>
+                        <div class="time-selector" id="time-selector">
+                            <button class="btn-time" data-minutes="5">5<span>min</span></button>
+                            <button class="btn-time active" data-minutes="10">10<span>min</span></button>
+                            <button class="btn-time" data-minutes="15">15<span>min</span></button>
+                            <button class="btn-time" data-minutes="30">30<span>min</span></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Piece Skin trigger -->
+                <div class="ctrl-trigger" id="ctrl-skin-trigger" role="button" tabindex="0"
+                     aria-haspopup="true" aria-expanded="false" aria-controls="ctrl-skin-dropdown"
+                     aria-label="Estilo de piezas">
+                    <i class="fa-solid fa-palette" aria-hidden="true"></i>
+                    <span>Skin</span>
+                    <!-- Dropdown -->
+                    <div class="ctrl-dropdown hidden" id="ctrl-skin-dropdown" role="group" aria-label="Estilo de piezas">
+                        <div class="ctrl-dropdown-label">🎨 Piece Skin</div>
+                        <div class="skin-selector" id="skin-selector-menu"></div>
+                    </div>
+                </div>
+
+                <!-- Board Settings trigger -->
+                <div class="ctrl-trigger" id="ctrl-board-trigger" role="button" tabindex="0"
+                     aria-haspopup="true" aria-expanded="false" aria-controls="ctrl-board-dropdown"
+                     aria-label="Ajustes del tablero">
+                    <i class="fa-solid fa-chess-board" aria-hidden="true"></i>
+                    <span>Board</span>
+                    <!-- Dropdown -->
+                    <div class="ctrl-dropdown hidden" id="ctrl-board-dropdown" style="min-width: 240px;" role="group" aria-label="Ajustes del tablero">
+                        <div class="ctrl-dropdown-label">🎨 Board Settings</div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 0.65rem; color: var(--text-soft); font-weight: bold; display:block; margin-bottom:4px;">Theme:</label>
+                            <div class="board-theme-selector" id="board-theme-menu">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                        <div>
+                            <label for="board-opacity-menu" style="font-size: 0.65rem; color: var(--text-soft); font-weight: bold; display: flex; justify-content: space-between;">
+                                Opacity: <span id="board-opacity-label-menu">0.65</span>
+                            </label>
+                            <input type="range" id="board-opacity-menu" min="0.2" max="1.0" step="0.05" value="0.65" style="width: 100%; margin-top:4px;">
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <!-- Game Mode Buttons -->
+            <div class="home-modes">
+                <button id="btn-mode-ai" class="btn-mode btn-mode-primary">
+                    <i class="fa-solid fa-robot"></i>
+                    <span class="btn-mode-label">vs. CPU</span>
+                </button>
+                <button id="btn-mode-local" class="btn-mode btn-mode-secondary">
+                    <i class="fa-solid fa-user-group"></i>
+                    <span class="btn-mode-label">Local Match</span>
+                </button>
+                <button class="btn-mode btn-mode-secondary btn-soon-mode btn-soon">
+                    <i class="fa-solid fa-globe"></i>
+                    <span class="btn-mode-label">Online</span>
+                    <span class="badge-soon">Soon</span>
+                </button>
+                <button id="btn-history" class="btn-mode btn-mode-ghost">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span class="btn-mode-label">History</span>
+                </button>
+                <button id="btn-achievements" class="btn-mode btn-mode-ghost">
+                    <i class="fa-solid fa-trophy"></i>
+                    <span class="btn-mode-label">Logros</span>
+                </button>
+
+            </div>
+
+        </div><!-- end .home-center-group -->
+
+        <!-- Watermark / Digital signature -->
+        <p class="home-watermark">code with ♥ by: theAstroBruh ~</p>
+
+    </div>
+
+    <!-- ══ SCREEN: Boot / Loading ═══════════════════════════ -->
+    <div id="loading-screen" class="screen loader-screen">
+        <!-- Logo -->
+        <div class="loader-logo">
+            <i class="fa-solid fa-chess-knight loader-logo-icon"></i>
+            <div class="loader-logo-text">
+                <span class="loader-title-astro">Astro</span>
+                <span class="loader-title-chess">Chess</span>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="loader-bar-wrapper">
+            <div class="loader-bar-track">
+                <div class="loader-bar-fill" id="loader-progress-fill"></div>
+            </div>
+            <div class="loader-status-text" id="loader-status-text">Iniciando...</div>
+        </div>
+
+        <!-- Decorative spinning ring -->
+        <div class="loader-ring">
+            <i class="fa-solid fa-chess-pawn loader-ring-icon"></i>
+        </div>
+
+        <p class="loader-watermark">Astro~Chess v.022</p>
+    </div>
+
+    <!-- ══ SCREEN 1.5: Solo Player Hub (La Plaza & Free Mode) ══ -->
+    <div id="cpu-hub-screen" class="screen hidden">
+        <div class="hub-header">
+            <button class="btn-hub-back" id="btn-hub-back"><i class="fa-solid fa-arrow-left"></i></button>
+            <h2>Modo Solitario</h2>
+            <div class="hub-countdown" id="hub-countdown">Rotando...</div>
+        </div>
+        
+        <div class="hub-tabs">
+            <button class="hub-tab active" data-tab="plaza">🏟 La Plaza</button>
+            <button class="hub-tab" data-tab="freemode">📖 Modo Libre</button>
+        </div>
+        
+        <div class="hub-content" id="hub-content-plaza">
+            <div class="plaza-grid" id="plaza-grid">
+                <!-- NPC cards injected by JS -->
+            </div>
+        </div>
+        
+        <div class="hub-content hidden" id="hub-content-freemode">
+            <div class="plaza-grid" id="freemode-grid">
+                <!-- Unlocked NPC cards injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ SCREEN 2: Game Board ══════════════════════════════ -->
+    <div id="game-screen" class="screen hidden">
+        <div id="game-container">
+
+            <!-- Black player panel (top) -->
+            <div class="info-panel" id="panel-black">
+                <!-- Left col: avatar -->
+                <div class="panel-avatar-col" id="panel-avatar-col-black">
+                    <div class="panel-avatar-bg-circle"></div>
+                    <div class="panel-avatar-large" id="panel-avatar-black">
+                        <span class="player-dot black-dot panel-color-dot"></span>
+                    </div>
+                </div>
+                <!-- Right col: name / score / timer / captured -->
+                <div class="panel-info-col">
+                    <div class="panel-name-row">
+                        <span class="player-name" id="player-name-black">Black</span>
+                    </div>
+                    <div class="panel-score-row">
+                        <span class="player-score" id="score-black">00 Pts</span>
+                    </div>
+                    <div class="panel-timer-row">
+                        <span class="timer" id="timer-black" role="timer" aria-label="Tiempo de las negras">10:00</span>
+                    </div>
+                    <div class="panel-captured-row">
+                        <div class="captured-pieces" id="captured-by-black"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Board -->
+            <div id="board-wrapper">
+                <div id="board-area">
+                    <div id="chessboard"></div>
+                    <div id="pieces-layer"></div>
+                </div>
+            </div>
+
+            <!-- White player panel (bottom) -->
+            <div class="info-panel" id="panel-white">
+                <!-- Left col: avatar -->
+                <div class="panel-avatar-col" id="panel-avatar-col-white">
+                    <div class="panel-avatar-bg-circle"></div>
+                    <div class="panel-avatar-large" id="panel-avatar-white">
+                        <span class="player-dot white-dot panel-color-dot"></span>
+                    </div>
+                </div>
+                <!-- Right col: name / score / timer / captured -->
+                <div class="panel-info-col">
+                    <div class="panel-name-row">
+                        <span class="player-name" id="player-name-white">White</span>
+                    </div>
+                    <div class="panel-score-row">
+                        <span class="player-score" id="score-white">00 Pts</span>
+                    </div>
+                    <div class="panel-timer-row">
+                        <span class="timer" id="timer-white" role="timer" aria-label="Tiempo de las blancas">10:00</span>
+                    </div>
+                    <div class="panel-captured-row">
+                        <div class="captured-pieces" id="captured-by-white"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Move Timeline — real-time move log -->
+            <div id="timeline-wrapper">
+                <div class="tl-header">⚔ Move Timeline</div>
+                <div id="move-timeline" aria-label="Historial de jugadas">
+                    <div class="tl-empty">Sin jugadas todavía…</div>
+                </div>
+            </div>
+
+            <!-- Status message — fixed height, never pushes layout -->
+            <div id="status-message" role="status" aria-live="polite" aria-atomic="true">White's Turn</div>
+
+            <!-- Game Controls -->
+            <button type="button" id="btn-config-game" class="global-config-widget" title="Configuración"
+                    aria-label="Opciones de partida" aria-expanded="false" aria-controls="game-options-menu">
+                <i class="fa-solid fa-gear" aria-hidden="true"></i>
+            </button>
+            
+            <div class="controls-container hidden" id="game-options-menu" role="group" aria-label="Opciones de partida">
+                <div class="controls">
+                    <button id="btn-back-menu" class="btn-game" title="Menu">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span class="btn-game-label">Menu</span>
+                    </button>
+                    <button id="btn-flip" class="btn-game" title="Flip board">
+                        <i class="fa-solid fa-rotate"></i>
+                        <span class="btn-game-label">Flip</span>
+                    </button>
+                    <button id="btn-pause" class="btn-game" title="Pause / Resume clock (P)">
+                        <i class="fa-solid fa-pause"></i>
+                        <span class="btn-game-label">Pause</span>
+                    </button>
+                    <button id="btn-skin-game" class="btn-game btn-skin" title="Change piece skin">
+                        <i class="fa-solid fa-palette"></i>
+                        <span class="btn-game-label">Skin</span>
+                    </button>
+                    <button id="btn-board-game" class="btn-game btn-board" title="Change board theme">
+                        <i class="fa-solid fa-chess-board"></i>
+                        <span class="btn-game-label">Board</span>
+                    </button>
+                    <!-- <button id="btn-audio-game" class="btn-game btn-audio" title="Audio settings">
+                        <i class="fa-solid fa-music"></i>
+                        <span class="btn-game-label">Audio</span>
+                    </button> -->
+                    <button id="btn-resign" class="btn-game btn-danger" title="Resign game">
+                        <i class="fa-solid fa-flag"></i>
+                        <span class="btn-game-label">Resign</span>
+                    </button>
+                    <button id="btn-reset" class="btn-game btn-danger" title="Reset game">
+                        <i class="fa-solid fa-arrow-rotate-right"></i>
+                        <span class="btn-game-label">Reset</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ══ SCREEN 3: Game History (v.006) ════════════════════ -->
+    <div id="history-screen" class="screen hidden">
+
+        <div class="history-header">
+            <button id="btn-back-from-history" class="btn-game">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1 class="history-title">Game History</h1>
+            <span id="hist-elo" class="profile-elo-badge" style="font-size:0.75rem;">⚡ —</span>
+        </div>
+
+        <div class="history-summary">
+            <div class="history-stat-card">
+                <div class="history-stat-value win" id="hist-wins">0</div>
+                <div class="history-stat-label">Wins</div>
+            </div>
+            <div class="history-stat-card">
+                <div class="history-stat-value loss" id="hist-losses">0</div>
+                <div class="history-stat-label">Losses</div>
+            </div>
+            <div class="history-stat-card">
+                <div class="history-stat-value draw" id="hist-draws">0</div>
+                <div class="history-stat-label">Draws</div>
+            </div>
+        </div>
+
+        <div class="history-list" id="history-list">
+            <!-- Populated by UI.showHistoryScreen() -->
+        </div>
+
+    </div>
+
+    <!-- ══ Pawn Promotion Modal ═════════════════════════════ -->
+    <div id="promotion-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Promocionar peón">
+        <div class="modal-backdrop"></div>
+        <div class="promotion-content">
+            <p class="modal-label">Promote pawn to:</p>
+            <div id="promotion-options"></div>
+        </div>
+    </div>
+
+    <!-- ══ Game Over Modal ══════════════════════════════════ -->
+    <div id="gameover-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Fin de la partida">
+        <div class="modal-backdrop"></div>
+        <div class="gameover-content">
+            <div class="gameover-icon" id="gameover-icon" aria-hidden="true"></div>
+            <h2 class="gameover-title" id="gameover-title">Game Over</h2>
+            <p class="gameover-subtitle" id="gameover-subtitle"></p>
+
+            <!-- Score block (v.006) -->
+            <div class="gameover-score-block hidden" id="gameover-score">
+                <div class="gameover-score-label">Match Score</div>
+                <div class="gameover-score-values">—</div>
+            </div>
+
+            <!-- Elo change (v.006 — CPU mode only) -->
+            <div class="gameover-elo-change hidden" id="gameover-elo-change"></div>
+
+            <div class="gameover-buttons">
+                <button id="btn-gameover-rematch" class="btn-menu btn-primary">
+                    <i class="fa-solid fa-rotate-right"></i> Play Again
+                </button>
+                <button id="btn-gameover-history" class="btn-history-nav">
+                    <i class="fa-solid fa-clock-rotate-left"></i> View History
+                </button>
+                <button id="btn-gameover-menu" class="btn-menu btn-secondary">
+                    <i class="fa-solid fa-house"></i> Main Menu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ CPU Difficulty Modal (v.006) ═════════════════════ -->
+    <div id="cpu-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Dificultad de la CPU">
+        <div class="modal-backdrop"></div>
+        <div class="cpu-modal-content">
+            <div class="cpu-modal-title">
+                <i class="fa-solid fa-robot" style="font-size:1.8rem; margin-bottom:6px; display:block;"></i>
+                Play vs CPU
+            </div>
+            <p class="cpu-modal-sub">Choose your challenge level</p>
+
+            <div class="difficulty-grid">
+                <button class="btn-difficulty active" data-diff="easy">
+                    <i class="fa-solid fa-seedling" style="color:#22c55e;"></i>
+                    <span class="diff-name">Easy</span>
+                    <span class="diff-desc">Random moves</span>
+                </button>
+                <button class="btn-difficulty" data-diff="medium">
+                    <i class="fa-solid fa-brain" style="color:#a78bfa;"></i>
+                    <span class="diff-name">Medium</span>
+                    <span class="diff-desc">Tactical play</span>
+                </button>
+            </div>
+
+            <button id="btn-start-cpu" class="btn-menu btn-primary">
+                <i class="fa-solid fa-play"></i> Start Game
+            </button>
+            <button id="btn-cancel-cpu" class="btn-menu btn-secondary">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- ══ Profile Modal (v.006) ════════════════════════════ -->
+    <div id="profile-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Tu perfil">
+        <div class="modal-backdrop"></div>
+        <div class="profile-modal-content">
+            <h2 class="profile-modal-title">
+                <i class="fa-solid fa-user-astronaut" style="font-size:1.6rem; display:block; margin-bottom:8px;"></i>
+                Your Profile
+            </h2>
+            <p class="profile-modal-sub">Set your username to track your Elo rating and game history.</p>
+
+            <div class="google-auth-section" style="margin-bottom: 20px;">
+                <button type="button" id="btn-google-login" class="btn-menu btn-google" style="display:flex; align-items:center; justify-content:center; gap:10px; width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.18); color:#fff; font-weight:600; padding:10px 14px; border-radius:12px; cursor:pointer; transition:all 0.2s;">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 12s.7 2.3 1.9 4.7l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16c1.8 3.7 5.6 7 10.1 7z"/></svg>
+                    <span>Continuar con Google</span>
+                </button>
+                <div id="google-user-badge" class="google-user-badge hidden" style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,215,0,0.3); border-radius:12px; padding:10px 14px; margin-bottom:8px;"></div>
+                <button type="button" id="btn-google-logout" class="btn-menu btn-secondary hidden" style="width:100%; font-size:0.8rem; padding:6px; margin-top:6px;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión de Google
+                </button>
+                <div style="display:flex; align-items:center; margin:16px 0; color:rgba(255,255,255,0.3); font-size:0.75rem;">
+                    <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
+                    <span style="padding:0 8px;">o juega como invitado</span>
+                    <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
+                </div>
+            </div>
+
+            <div class="profile-input-group">
+                <label class="profile-input-label" for="profile-name-input">Username</label>
+                <input
+                    type="text"
+                    id="profile-name-input"
+                    class="profile-name-input"
+                    maxlength="20"
+                    placeholder="Enter your name..."
+                    autocomplete="off"
+                >
+            </div>
+
+            <button id="btn-save-profile" class="btn-menu btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i> Save Profile
+            </button>
+            <button id="btn-cancel-profile" class="btn-menu btn-secondary">
+                Cancel
+            </button>
+
+            <!-- Reset progress section -->
+            <div class="reset-progress-section">
+                <div class="reset-divider"></div>
+                <div id="reset-confirm-area" class="reset-confirm-area hidden">
+                    <p class="reset-warning-text">⚠️ Esto borrará tu perfil, ELO, historial y todos los personajes desbloqueados. Esta acción no se puede deshacer.</p>
+                    <div class="reset-confirm-btns">
+                        <button id="btn-reset-confirm" class="btn-menu btn-danger-solid" style="flex:1; font-size:0.8rem; padding: 8px 0;">
+                            <i class="fa-solid fa-trash"></i> Sí, borrar todo
+                        </button>
+                        <button id="btn-reset-cancel" class="btn-menu btn-secondary" style="flex:1; font-size:0.8rem; padding: 8px 0;">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+                <button id="btn-reset-progress" class="btn-reset-progress">
+                    <i class="fa-solid fa-rotate-left"></i> Borrar Progreso
+                </button>
+            </div>
+
+        </div><!-- /.profile-modal-content -->
+    </div><!-- /#profile-modal -->
+
+    <!-- ══ Trading Card Modal (v.020) ════════════════════════ -->
+    <div id="trading-card-modal" class="hidden">
+        <div class="modal-backdrop"></div>
+        <div class="trading-card-container">
+            <!-- Front of the card -->
+            <div class="trading-card">
+                <div class="tc-header">
+                    <span class="tc-type" id="tc-type">Player</span>
+                    <div class="tc-elo">
+                        <i class="fa-solid fa-bolt"></i> <span id="tc-elo-val">1200</span>
+                    </div>
+                </div>
+                
+                <div class="tc-image-wrapper">
+                    <img id="tc-avatar" src="" alt="Avatar" class="tc-avatar-img">
+                </div>
+                
+                <div class="tc-name-plate">
+                    <h2 id="tc-name">Username</h2>
+                </div>
+                
+                <div class="tc-stats-container">
+                    <div class="tc-stat-box">
+                        <span class="tc-stat-label">W</span>
+                        <span class="tc-stat-val win" id="tc-wins">0</span>
+                    </div>
+                    <div class="tc-stat-box">
+                        <span class="tc-stat-label">D</span>
+                        <span class="tc-stat-val draw" id="tc-draws">0</span>
+                    </div>
+                    <div class="tc-stat-box">
+                        <span class="tc-stat-label">L</span>
+                        <span class="tc-stat-val loss" id="tc-losses">0</span>
+                    </div>
+                </div>
+                
+                <div class="tc-fav-piece">
+                    <span class="tc-fav-label">Pieza Favorita</span>
+                    <div class="tc-fav-selector" id="tc-fav-selector">
+                        <i class="fa-solid fa-chess-pawn" id="tc-fav-icon"></i>
+                    </div>
+                    <!-- Dropdown for fav piece selection -->
+                    <div class="tc-fav-dropdown hidden" id="tc-fav-dropdown">
+                        <i class="fa-solid fa-chess-pawn" data-piece="pawn"></i>
+                        <i class="fa-solid fa-chess-knight" data-piece="knight"></i>
+                        <i class="fa-solid fa-chess-bishop" data-piece="bishop"></i>
+                        <i class="fa-solid fa-chess-rook" data-piece="rook"></i>
+                        <i class="fa-solid fa-chess-queen" data-piece="queen"></i>
+                        <i class="fa-solid fa-chess-king" data-piece="king"></i>
+                    </div>
+                </div>
+                
+                <div class="tc-footer">
+                    <span class="tc-id" id="tc-id">ID: 00001</span>
+                    <span class="tc-edition">1st Edition</span>
+                </div>
+            </div>
+        </div>
+        <div class="tc-tap-to-close">Toca fuera de la carta para continuar</div>
+    </div>
+
+    <!-- ══ Exit Confirmation Modal ════════════════════════════ -->
+    <div id="exit-confirm-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="exit-confirm-title">
+        <div class="modal-backdrop"></div>
+        <div class="exit-confirm-content">
+            <div class="exit-confirm-icon" aria-hidden="true">⚠️</div>
+            <h2 class="exit-confirm-title" id="exit-confirm-title">Salir de la partida</h2>
+            <p class="exit-confirm-sub">¿Estás seguro? Perderás tu progreso en esta partida.</p>
+            <div class="exit-confirm-buttons">
+                <button id="btn-exit-confirm" class="btn-menu btn-danger-solid">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir
+                </button>
+                <button id="btn-exit-cancel" class="btn-menu btn-secondary">
+                    <i class="fa-solid fa-xmark"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Pause Overlay ════════════════════════════════════ -->
+    <div id="pause-overlay" class="pause-overlay hidden" role="dialog" aria-modal="true" aria-label="Partida en pausa">
+        <div class="pause-card">
+            <div class="pause-icon"><i class="fa-solid fa-pause" aria-hidden="true"></i></div>
+            <h2 class="pause-title">Partida en Pausa</h2>
+            <p class="pause-sub">Los relojes están detenidos.</p>
+            <button id="btn-resume" class="btn-menu btn-primary" type="button">
+                <i class="fa-solid fa-play" aria-hidden="true"></i> Reanudar
+            </button>
+        </div>
+    </div>
+
+    <!-- ══ JS Modules — order matters ════════════════════════ -->
+    <script src="js/analytics.js"></script>
+    <script src="js/constants.js"></script>
+    <script src="js/starfield.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/music.js"></script>
+    <script src="js/chess.js"></script>
+    <script src="js/skins.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/timer.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/plaza.js"></script>
+    <script src="js/cpu.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/announcer.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/experience.js"></script>
+    <script src="js/loader.js"></script>
+
+    <!-- ══ Firebase & Auth System ══════════════════════════════ -->
+    <script src="js/firebase-config.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script>
+        document.getElementById('btn-google-login')?.addEventListener('click', async () => {
+            if (window.AuthSystem) await window.AuthSystem.loginWithGoogle();
+        });
+        document.getElementById('btn-google-logout')?.addEventListener('click', async () => {
+            if (window.AuthSystem) await window.AuthSystem.logoutUser();
+        });
+    </script>
+
+    <!-- Cancel profile modal button wiring (needs DOM + UI to be ready) -->
+    <script>
+        document.getElementById('btn-cancel-profile')?.addEventListener('click', () => UI.hideProfileModal());
+    </script>
+
+</body>
+</html>
+
+

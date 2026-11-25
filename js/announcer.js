@@ -1,0 +1,484 @@
+/* =========================================================
+   announcer.js  Royal Announcer & Move Timeline  (v.002)
+
+   Responsibilities:
+      Royal Announcer: Elegantes y dinámicos avisos de tablero
+       con temática de realeza/ajedrez que escalan según la
+       trascendencia de las bajas y el control del reino.
+       Diseñado para flotar en la parte superior del tablero sin
+       obstruir la visión de las piezas ni las ventanas modales.
+      Move Timeline: Registro en tiempo real de cada jugada,
+       integrado en la pantalla de juego con notación ajedrecística.
+
+   Dependencies (load before game.js):
+     constants.js  PIECE_NAMES
+   ========================================================= */
+
+'use strict';
+
+const Announcer = (() => {
+
+    // ── Piece display names ───────────────────────────────
+    const PIECE_LABEL = {
+        P: 'Pawn',    p: 'Pawn',
+        N: 'Knight',  n: 'Knight',
+        B: 'Bishop',  b: 'Bishop',
+        R: 'Rook',    r: 'Rook',
+        Q: 'Queen',   q: 'Queen',
+        K: 'King',    k: 'King',
+    };
+
+    // ── Piece point values (for tier calculation) ─────────
+    const PIECE_VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+    // ── Special & Key Announcements (LoL & Royal Chess inspired) ──
+    const SPECIAL_FIRST_BLOOD  = { label: '🩸 FIRST BLOOD',     sub: 'The clash of realms begins',      css: 'tier-firstblood', duration: 2500 };
+    const SPECIAL_QUEEN_KILL   = { label: '👑 QUEENSLAYER',      sub: 'The rival court falls to ruin',   css: 'tier-queen',      duration: 2500 };
+    const SPECIAL_CHECK_KILL   = { label: '⚔ CHECK!',            sub: 'The King is under siege',         css: 'tier-check',      duration: 1600 };
+    const SPECIAL_SIEGE_STRIKE = { label: '⚔ SIEGE STRIKE',      sub: 'King pressured under assault',    css: 'tier-check',      duration: 2000 };
+    const SPECIAL_PROMO        = { label: '👑 CORONATION',       sub: 'A pawn ascends to royalty',       css: 'tier-promo',      duration: 2200 };
+    const SPECIAL_CASTLE       = { label: '🏰 ROYAL BULWARK',    sub: 'The King secures the fortress',   css: 'tier-castle',     duration: 1600 };
+    const SPECIAL_EN_PASSANT   = { label: '🗡 EN PASSANT',       sub: 'Shadow flank maneuver executed',  css: 'tier-ep',         duration: 1800 };
+    const SPECIAL_RETALIATION  = { label: '⚔ RETALIATION',       sub: 'An eye for an eye in the realm',  css: 'tier-retaliation',duration: 2000 };
+
+    // ── Internal state ────────────────────────────────────
+    let _streakValue     = 0;
+    let _streakCount     = 0;
+    let _streakTimer     = null;
+    let _lastMover       = null;
+    let _firstBloodDone  = false;
+    let _announceEl      = null;
+    let _hideTimer       = null;
+    let _timelineEl      = null;
+    let _moveNumber      = 0;
+    let _fullMoveNum     = 1;
+
+    // ── Helpers ───────────────────────────────────────────
+
+    function _getAnnounceEl() {
+        if (_announceEl) return _announceEl;
+        _announceEl = document.createElement('div');
+        _announceEl.id = 'kill-announcer';
+        _announceEl.className = 'kill-announcer hidden';
+        _announceEl.innerHTML =
+            '<div class="ka-inner">' +
+                '<div class="ka-label" id="ka-label"></div>' +
+                '<div class="ka-sub"   id="ka-sub"></div>' +
+            '</div>';
+        document.body.appendChild(_announceEl);
+        return _announceEl;
+    }
+
+    function _getTimelineEl() {
+        if (_timelineEl) return _timelineEl;
+        _timelineEl = document.getElementById('move-timeline');
+        return _timelineEl;
+    }
+
+    function _showAnnounce(config) {
+        const el = _getAnnounceEl();
+
+        if (_hideTimer) { clearTimeout(_hideTimer); _hideTimer = null; }
+
+        el.className = `kill-announcer ${config.css}`;
+        document.getElementById('ka-label').textContent = config.label;
+
+        const subEl = document.getElementById('ka-sub');
+        if (config.sub) {
+            subEl.textContent = config.sub;
+            subEl.style.display = '';
+        } else {
+            subEl.style.display = 'none';
+        }
+
+        // Force reflow
+        void el.offsetWidth;
+        el.classList.add('ka-pop');
+
+        _hideTimer = setTimeout(() => {
+            el.classList.remove('ka-pop');
+            el.classList.add('ka-fade');
+            setTimeout(() => {
+                el.className = 'kill-announcer hidden';
+            }, 300);
+        }, config.duration);
+    }
+
+    function _hideImmediately() {
+        if (_hideTimer) { clearTimeout(_hideTimer); _hideTimer = null; }
+        const el = _getAnnounceEl();
+        if (el) el.className = 'kill-announcer hidden';
+    }
+
+    function _resetStreak() {
+        _streakValue = 0;
+        _streakCount = 0;
+        _lastMover   = null;
+        if (_streakTimer) { clearTimeout(_streakTimer); _streakTimer = null; }
+    }
+
+    // ── Algebraic notation ────────────────────────────────
+    const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1'];
+
+    function _toAlgebraic(r, c) {
+        return FILES[c] + RANKS[r];
+    }
+
+    function _buildMoveText({ moving, captured, from, to, isCastling, isEnPassant, isPromotion, promotedTo, isCheck, isCheckmate }) {
+        if (isCastling) {
+            const kingside = to.c > from.c;
+            return kingside ? 'O-O' : 'O-O-O';
+        }
+
+        const pieceChar = moving.toUpperCase();
+        const fromSq = _toAlgebraic(from.r, from.c);
+        const toSq   = _toAlgebraic(to.r, to.c);
+        const capMark = (captured || isEnPassant) ? 'x' : '';
+        const promMark = isPromotion ? `=${(promotedTo || 'Q').toUpperCase()}` : '';
+        const checkMark = isCheckmate ? '#' : (isCheck ? '+' : '');
+
+        if (pieceChar === 'P') {
+            if (capMark) {
+                return `${fromSq[0]}x${toSq}${promMark}${checkMark}`;
+            }
+            return `${toSq}${promMark}${checkMark}`;
+        }
+        return `${pieceChar}${capMark}${toSq}${promMark}${checkMark}`;
+    }
+
+    // ── Public API ────────────────────────────────────────
+
+    function reset() {
+        _resetStreak();
+        _firstBloodDone = false;
+        _moveNumber     = 0;
+        _fullMoveNum    = 1;
+
+        const tl = _getTimelineEl();
+        if (tl) {
+            tl.innerHTML = '<div class="tl-empty">Sin jugadas todavía</div>';
+        }
+
+        _hideImmediately();
+    }
+
+    /**
+     * Called by game.js after every move.
+     */
+    function onMove(opts) {
+        const { moving, captured, mover, from, to,
+                isCastling, isEnPassant, isPromotion, promotedTo,
+                isCheck, isCheckmate } = opts;
+
+        _moveNumber++;
+
+        if (mover !== 'w') {
+            _fullMoveNum++;
+        }
+
+        // 1. Move Timeline Entry
+        //    The ply index travels with the chip so click-to-review knows
+        //    which snapshot to restore, and the notation is returned to
+        //    game.js so the review history can store it verbatim.
+        _appendTimelineEntry({
+            moveNum: _fullMoveNum - (mover === 'b' ? 0 : 1),
+            mover,
+            moving,
+            captured,
+            from, to,
+            isCastling, isEnPassant, isPromotion, promotedTo,
+            isCheck, isCheckmate,
+            ply: opts.ply,
+        });
+
+        // Hand the built notation back to the caller (review history)
+        opts.notationOut = _buildMoveText({
+            moving, captured, from, to,
+            isCastling, isEnPassant, isPromotion, promotedTo,
+            isCheck, isCheckmate,
+        });
+
+        // 2. Si hay Jaque Mate, no tapamos la pantalla con un cartel invasivo:
+        // el modal final de victoria/derrota ya se encargará limpiamente.
+        if (isCheckmate) {
+            _resetStreak();
+            _hideImmediately();
+            return;
+        }
+
+        // Promoción de Peón (sin captura)
+        if (isPromotion && !captured) {
+            _showAnnounce(SPECIAL_PROMO);
+            return;
+        }
+
+        // Enroque
+        if (isCastling) {
+            _showAnnounce(SPECIAL_CASTLE);
+            return;
+        }
+
+        // Al paso
+        if (isEnPassant) {
+            if (_streakTimer) clearTimeout(_streakTimer);
+            _streakValue += 1;
+            _streakCount += 1;
+            _lastMover = mover;
+            _firstBloodDone = true;
+            _showAnnounce({
+                ...SPECIAL_EN_PASSANT,
+                sub: `${PIECE_LABEL[moving] || 'Pawn'} flanked en passant`,
+            });
+            _streakTimer = setTimeout(_resetStreak, 8500);
+            return;
+        }
+
+        // Capturas
+        if (captured) {
+            const capVal = PIECE_VALUE[captured.toLowerCase()] || 0;
+            const attackerName = PIECE_LABEL[moving]   || moving.toUpperCase();
+            const victimName   = PIECE_LABEL[captured] || captured.toUpperCase();
+            const isQueenKill  = captured.toLowerCase() === 'q';
+
+            // Primer abatido de la partida: FIRST BLOOD!
+            if (!_firstBloodDone) {
+                _firstBloodDone = true;
+                if (_streakTimer) clearTimeout(_streakTimer);
+                _lastMover   = mover;
+                _streakCount = 1;
+                _streakValue = capVal;
+
+                if (isQueenKill) {
+                    _showAnnounce({
+                        label: '👑 FIRST BLOOD: QUEENSLAYER',
+                        sub: `${attackerName} eliminated the Queen!`,
+                        css: 'tier-queen',
+                        duration: 2700,
+                    });
+                } else {
+                    _showAnnounce({
+                        ...SPECIAL_FIRST_BLOOD,
+                        sub: `${attackerName} draws first blood on ${victimName}`,
+                    });
+                }
+                _streakTimer = setTimeout(_resetStreak, 8500);
+                return;
+            }
+
+            // Muerte de Reina en cualquier momento
+            if (isQueenKill) {
+                if (_streakTimer) clearTimeout(_streakTimer);
+                _streakValue += capVal;
+                _streakCount = (_lastMover === mover) ? (_streakCount + 1) : 1;
+                _lastMover   = mover;
+                _showAnnounce({
+                    ...SPECIAL_QUEEN_KILL,
+                    sub: `${attackerName} felled the Queen`,
+                });
+                _streakTimer = setTimeout(_resetStreak, 8500);
+                return;
+            }
+
+            // Retaliación / Venganza: el rival recaptura inmediatamente
+            if (_lastMover && _lastMover !== mover && _streakCount >= 1) {
+                if (_streakTimer) clearTimeout(_streakTimer);
+                _lastMover   = mover;
+                _streakCount = 1;
+                _streakValue = capVal;
+                _showAnnounce({
+                    ...SPECIAL_RETALIATION,
+                    sub: `${attackerName} avenges the fallen ${victimName}`,
+                });
+                _streakTimer = setTimeout(_resetStreak, 8500);
+                return;
+            }
+
+            // Racha continua del mismo bando (Double Strike, Rampage, etc.)
+            if (_lastMover === mover) {
+                if (_streakTimer) clearTimeout(_streakTimer);
+                _streakCount += 1;
+                _streakValue += capVal;
+
+                let config;
+                if (_streakCount === 2) {
+                    config = {
+                        label: '⚡ DOUBLE STRIKE',
+                        sub: isCheck ? `${attackerName} strikes with Check!` : 'Breaching the frontline',
+                        css: 'tier-3',
+                        duration: 2000,
+                    };
+                } else if (_streakCount === 3) {
+                    config = {
+                        label: '🔥 ROYAL RAMPAGE',
+                        sub: 'Enemy vanguard collapsing',
+                        css: 'tier-4',
+                        duration: 2200,
+                    };
+                } else if (_streakCount === 4) {
+                    config = {
+                        label: '💀 DOMINATING',
+                        sub: 'The realm bends the knee',
+                        css: 'tier-5',
+                        duration: 2500,
+                    };
+                } else {
+                    config = {
+                        label: '✦ DYNASTIC SUPREMACY ✦',
+                        sub: 'Unstoppable imperial conquest',
+                        css: 'tier-7',
+                        duration: 2800,
+                    };
+                }
+
+                _showAnnounce(config);
+                _streakTimer = setTimeout(_resetStreak, 8500);
+                return;
+            }
+
+            // Captura individual estándar (inicio de racha)
+            if (_streakTimer) clearTimeout(_streakTimer);
+            _lastMover   = mover;
+            _streakCount = 1;
+            _streakValue = capVal;
+
+            if (isCheck) {
+                _showAnnounce({
+                    ...SPECIAL_SIEGE_STRIKE,
+                    sub: `${attackerName} strikes ${victimName} with Check!`,
+                });
+            } else if (captured.toLowerCase() === 'r') {
+                _showAnnounce({
+                    label: '🏰 TOWER BREAKER',
+                    sub: `${attackerName} took down the Rook`,
+                    css: 'tier-3',
+                    duration: 2000,
+                });
+            } else if (captured.toLowerCase() === 'b' || captured.toLowerCase() === 'n') {
+                _showAnnounce({
+                    label: '⚔ FLANK STRIKE',
+                    sub: `${attackerName} claimed the ${victimName}`,
+                    css: 'tier-2',
+                    duration: 1800,
+                });
+            } else {
+                _showAnnounce({
+                    label: '⚔ SKIRMISH',
+                    sub: `${attackerName} struck ${victimName}`,
+                    css: 'tier-1',
+                    duration: 1600,
+                });
+            }
+
+            _streakTimer = setTimeout(_resetStreak, 8500);
+            return;
+        }
+
+        // Jaque común (sin captura)
+        if (isCheck && !captured) {
+            _showAnnounce(SPECIAL_CHECK_KILL);
+        }
+    }
+
+    // ── Timeline helpers ──────────────────────────────────
+
+    /**
+     * Append a chip to the Move Timeline.
+     *
+     * Two modes:
+     *   1. Live play  pass the full move descriptor and the notation is built
+     *      from it (unchanged behaviour).
+     *   2. Restoring a saved game  pass a pre-built `notation` string; the chip
+     *      is rendered as a compact entry with no piece reconstruction.
+     *
+     * Every chip is a real button carrying `data-ply`, which is what the
+     * click-to-review layer binds to.
+     */
+    function _appendTimelineEntry(opts) {
+        const tl = _getTimelineEl();
+        if (!tl) return;
+
+        const emptyEl = tl.querySelector('.tl-empty');
+        if (emptyEl) emptyEl.remove();
+
+        const { moveNum, mover, moving, captured, from, to,
+                isCastling, isEnPassant, isPromotion, promotedTo,
+                isCheck, isCheckmate, ply, notation } = opts;
+
+        const colorClass   = mover === 'w' ? 'tl-white' : 'tl-black';
+        const captureClass = captured ? 'tl-capture' : '';
+        const checkClass   = isCheckmate ? 'tl-mate' : (isCheck ? 'tl-check' : '');
+        const numLabel     = mover === 'w' ? `${moveNum + 1}.` : '';
+
+        let inner;
+
+        if (notation && !moving) {
+            // Restored from storage: notation only, no icons to rebuild
+            inner = `<span class="tl-num">${numLabel}</span>` +
+                    `<span class="tl-move">${notation}</span>`;
+        } else {
+            const moveText = _buildMoveText({ moving, captured, from, to,
+                isCastling, isEnPassant, isPromotion, promotedTo,
+                isCheck, isCheckmate });
+
+            const pieceKey = (moving || '').toUpperCase();
+            const pieceIcon = {
+                K: 'fa-chess-king', Q: 'fa-chess-queen', R: 'fa-chess-rook',
+                B: 'fa-chess-bishop', N: 'fa-chess-knight', P: 'fa-chess-pawn',
+            }[pieceKey] || 'fa-chess-pawn';
+
+            let capHtml = '';
+            if (captured) {
+                const capKey = captured.toUpperCase();
+                const capIcon = {
+                    K: 'fa-chess-king', Q: 'fa-chess-queen', R: 'fa-chess-rook',
+                    B: 'fa-chess-bishop', N: 'fa-chess-knight', P: 'fa-chess-pawn',
+                }[capKey] || 'fa-chess-pawn';
+                capHtml = `<span class="tl-cap-icon"><i class="fa-solid ${capIcon}"></i></span>`;
+            }
+
+            let badgeHtml = '';
+            if (isCheckmate)        badgeHtml = '<span class="tl-badge tl-badge-mate">#</span>';
+            else if (isCheck)       badgeHtml = '<span class="tl-badge tl-badge-check">+</span>';
+            if (isCastling)         badgeHtml += '<span class="tl-badge tl-badge-castle">🏰</span>';
+            if (isPromotion)        badgeHtml += '<span class="tl-badge tl-badge-promo">👑</span>';
+            if (isEnPassant)        badgeHtml += '<span class="tl-badge tl-badge-ep">e.p.</span>';
+
+            inner = `<span class="tl-num">${numLabel}</span>` +
+                    `<span class="tl-piece-icon"><i class="fa-solid ${pieceIcon}"></i></span>` +
+                    `<span class="tl-move">${moveText}</span>` +
+                    capHtml +
+                    badgeHtml;
+        }
+
+        // A button, so the chip is keyboard reachable and clickable
+        const entry = document.createElement('button');
+        entry.type = 'button';
+        entry.className = `tl-entry ${colorClass} ${captureClass} ${checkClass}`.trim();
+        if (ply) {
+            entry.dataset.ply = String(ply);
+            entry.setAttribute('aria-label', `Ir a la jugada ${ply}${notation ? ': ' + notation : ''}`);
+        }
+        entry.innerHTML = inner;
+
+        // Mark the newest chip; review code moves this marker around
+        const prev = tl.querySelector('.tl-entry.tl-latest');
+        if (prev) prev.classList.remove('tl-latest');
+        entry.classList.add('tl-latest');
+
+        tl.appendChild(entry);
+        tl.scrollTop = tl.scrollHeight;
+    }
+
+    /** Public: append a historical chip onto a chip list being rebuilt. */
+    function appendHistorical(opts) {
+        _appendTimelineEntry(opts);
+    }
+
+    return {
+        reset,
+        onMove,
+        appendHistorical,
+    };
+
+})();

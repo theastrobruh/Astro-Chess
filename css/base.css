@@ -1,0 +1,202 @@
+/* =========================================================
+   base.css — Design tokens, reset, animations, body
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Orbitron:wght@700;800;900&display=swap');
+
+:root {
+    /* ── Background — deep-space night sky ── */
+    --bg-1: #04040d;
+    --bg-2: #120925;
+    --bg-3: #2b1440;
+    --bg-4: #0a0616;
+
+    /* ── Board Themes ── */
+    --sq-light: 234, 221, 202; /* Classic Green default RGB */
+    --sq-dark:   71, 106,  68; /* Classic Green default RGB */
+    --board-op:  0.65;         /* Default opacity */
+    /* Coordinate labels: dark text on light squares, light on dark squares */
+    --coord-on-light: #3d2f16;
+    --coord-on-dark:  #f2e6cd;
+    --coord-op: 0.82;
+
+    /* ── Interaction ── */
+    --highlight:       rgba(255, 215, 0, 0.55);
+    --valid-move-dot:  rgba(0, 0, 0, 0.22);
+    --valid-cap-ring:  rgba(0, 0, 0, 0.26);
+
+    /* ── Typography ── */
+    --text:       #f8fafc;
+    --text-muted: #64748b;
+    --text-soft:  #94a3b8;
+    --font-display: 'Orbitron', 'Inter', sans-serif;
+    --font-body:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+    /* ── UI surfaces ── */
+    --panel-bg:    rgba(30, 41, 59, 0.88);
+    --glass-bg:    rgba(255, 255, 255, 0.04);
+    --glass-border: rgba(255, 255, 255, 0.1);
+
+    /* ── Cosmic Royal surface scale — indigo → violet ── */
+    --surface-0: rgba(6, 8, 22, 0.92);
+    --surface-1: rgba(16, 15, 44, 0.72);
+    --surface-2: rgba(28, 24, 68, 0.62);
+    --surface-3: rgba(46, 38, 96, 0.52);
+    --rim-1:     rgba(255, 255, 255, 0.10);
+    --rim-2:     rgba(255, 255, 255, 0.06);
+    --rim-glow:  rgba(129, 140, 248, 0.35);
+    --inner-light: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    --inner-deep:  inset 0 -18px 34px -22px rgba(0, 0, 0, 0.75);
+
+    /* ── Elevation — deeper, more layered ── */
+    --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --shadow-2: 0 8px 26px rgba(0, 0, 0, 0.48);
+    --shadow-3: 0 22px 54px -14px rgba(0, 0, 0, 0.72);
+    --shadow-4: 0 40px 110px -24px rgba(0, 0, 0, 0.86);
+    --glow-accent: 0 0 0 1px rgba(129, 140, 248, 0.18), 0 0 42px -10px rgba(129, 140, 248, 0.55);
+    --glow-gold:   0 0 0 1px rgba(251, 191, 36, 0.22), 0 0 40px -12px rgba(251, 191, 36, 0.55);
+
+    /* ── Radii ── */
+    --r-xs: 8px;
+    --r-sm: 11px;
+    --r-md: 15px;
+    --r-lg: 20px;
+    --r-xl: 26px;
+    --r-pill: 999px;
+
+    /* ── Motion ── */
+    --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-soft:   cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ── Piece colours ── */
+    --piece-white: #ffffff;
+    --piece-black: #111827;
+
+    /* ── Accent scale — indigo / violet ── */
+    --accent:       #6366f1;
+    --accent-dark:  #4f46e5;
+    --accent-light: #818cf8;
+    --accent-deep:  #3730a3;
+    --violet:       #8b5cf6;
+    --violet-light: #c4b5fd;
+    --fuchsia:      #d946ef;
+
+    /* ── Royal gold ── */
+    --gold:       #fbbf24;
+    --gold-light: #fde68a;
+    --gold-deep:  #b45309;
+
+    /* ── Status ── */
+    --danger:  #e11d48;
+    --warning: #f97316;
+    --success: #22c55e;
+    --info:    #38bdf8;
+
+    /* ── Typography scale ── */
+    --fs-micro: 0.58rem;
+    --fs-xs:    0.66rem;
+    --fs-sm:    0.75rem;
+    --fs-md:    0.86rem;
+    --fs-lg:    1rem;
+    --fs-xl:    1.3rem;
+    --fs-2xl:   1.7rem;
+    --tracking-caps: 1.6px;
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html { font-size: 16px; }
+
+body {
+    font-family: var(--font-body);
+    background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 52%, var(--bg-3) 100%);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: calc(var(--vh, 1vh) * 100);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* ── Utilities ── */
+.hidden { display: none !important; }
+
+/* Visually hidden but available to assistive tech */
+.sr-only {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ── Focus visibility — one consistent ring for the whole app ── */
+:where(button, [role="button"], a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--violet-light);
+    outline-offset: 2px;
+    border-radius: var(--r-sm);
+}
+
+/* Board squares get an inset ring rather than an outset one */
+.square:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: -3px;
+    z-index: 6;
+}
+
+/* ── Particle layer sits above the starfield, below UI ── */
+#cosmic-dust {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ── Keyframes ── */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+
+@keyframes popIn {
+    0%   { opacity: 0; transform: scale(0.80) translateY(20px); }
+    70%  { transform: scale(1.03) translateY(-2px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes pulseCheck {
+    0%, 100% { background-color: rgba(239, 68, 68, 0.55); }
+    50%       { background-color: rgba(239, 68, 68, 0.90); }
+}
+
+@keyframes starPulse {
+    0%   { text-shadow: 0 0 6px rgba(99,102,241,0.4); }
+    50%  { text-shadow: 0 0 22px rgba(139,92,246,0.9); }
+    100% { text-shadow: 0 0 6px rgba(99,102,241,0.4); }
+}

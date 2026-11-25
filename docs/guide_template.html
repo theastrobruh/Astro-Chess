@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Astro Chess — Guía Oficial de Usuario</title>
+<style>
+    @page {
+        size: A4 portrait;
+        margin: 12mm 14mm 12mm 14mm;
+    }
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background: #0b0f19;
+        color: #e2e8f0;
+        line-height: 1.45;
+        font-size: 11pt;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* ── Header ── */
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(165, 180, 252, 0.25);
+        margin-bottom: 14px;
+    }
+    .header-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .logo-icon {
+        font-size: 26pt;
+        color: #a5b4fc;
+        line-height: 1;
+    }
+    .logo-title h1 {
+        font-size: 20pt;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        background: linear-gradient(90deg, #c4b5fd, #a5b4fc, #93c5fd);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.1;
+    }
+    .logo-title p {
+        font-size: 8.5pt;
+        color: #94a3b8;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    .version-tag {
+        background: rgba(99, 102, 241, 0.18);
+        border: 1px solid rgba(99, 102, 241, 0.4);
+        color: #c7d2fe;
+        font-size: 8pt;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 999px;
+        letter-spacing: 1px;
+    }
+
+    /* ── Intro Callout ── */
+    .intro-banner {
+        background: linear-gradient(135deg, rgba(30, 27, 75, 0.6), rgba(15, 23, 42, 0.6));
+        border: 1px solid rgba(129, 140, 248, 0.3);
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        font-size: 9.5pt;
+        color: #cbd5e1;
+    }
+    .intro-banner b { color: #f8fafc; }
+
+    /* ── Grid Layouts ── */
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    /* ── Cards ── */
+    .card {
+        background: rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 11px 13px;
+        position: relative;
+    }
+    .card-title {
+        font-size: 10pt;
+        font-weight: 700;
+        color: #f1f5f9;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+        letter-spacing: -0.2px;
+    }
+    .card p, .card li {
+        font-size: 8.8pt;
+        color: #94a3b8;
+        line-height: 1.4;
+    }
+    .card ul {
+        list-style: none;
+        padding: 0;
+    }
+    .card ul li {
+        position: relative;
+        padding-left: 12px;
+        margin-bottom: 3px;
+    }
+    .card ul li::before {
+        content: '•';
+        position: absolute;
+        left: 2px;
+        color: #818cf8;
+        font-weight: bold;
+    }
+
+    /* ── Section Title ── */
+    .section-title {
+        font-size: 11.5pt;
+        font-weight: 800;
+        color: #f8fafc;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 4px;
+    }
+
+    /* ── Announcer Table ── */
+    .announcer-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 8.5pt;
+        margin-bottom: 14px;
+        background: rgba(15, 23, 42, 0.45);
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .announcer-table th {
+        background: rgba(30, 41, 59, 0.7);
+        padding: 7px 10px;
+        text-align: left;
+        color: #cbd5e1;
+        font-weight: 700;
+        font-size: 8pt;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+    .announcer-table td {
+        padding: 6px 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.04);
+        color: #94a3b8;
+    }
+    .callout-badge {
+        font-weight: 800;
+        font-size: 8pt;
+        padding: 2px 7px;
+        border-radius: 4px;
+        display: inline-block;
+        letter-spacing: 0.5px;
+    }
+    .bg-crimson { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.35); }
+    .bg-queen   { background: rgba(236, 72, 153, 0.2); color: #fbcfe8; border: 1px solid rgba(236, 72, 153, 0.35); }
+    .bg-amber   { background: rgba(245, 158, 11, 0.2); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.35); }
+    .bg-purple  { background: rgba(168, 85, 247, 0.2); color: #e9d5ff; border: 1px solid rgba(168, 85, 247, 0.35); }
+    .bg-blue    { background: rgba(56, 189, 248, 0.2); color: #bae6fd; border: 1px solid rgba(56, 189, 248, 0.35); }
+
+    /* ── Step-by-Step ── */
+    .steps-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+    .step-box {
+        flex: 1;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 8px;
+        padding: 8px 10px;
+    }
+    .step-num {
+        font-size: 7.5pt;
+        font-weight: 800;
+        color: #818cf8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 2px;
+    }
+    .step-title {
+        font-size: 9pt;
+        font-weight: 700;
+        color: #f1f5f9;
+        margin-bottom: 2px;
+    }
+    .step-desc {
+        font-size: 8pt;
+        color: #94a3b8;
+        line-height: 1.35;
+    }
+
+    /* ── Footer ── */
+    .footer {
+        margin-top: 10px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 7.8pt;
+        color: #64748b;
+    }
+    .footer span b { color: #94a3b8; }
+</style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-logo">
+            <div class="logo-icon">♚</div>
+            <div class="logo-title">
+                <h1>ASTRO CHESS</h1>
+                <p>Guía Esencial para el Jugador ✦ Web Edition</p>
+            </div>
+        </div>
+        <div class="version-tag">VERSIÓN ACTUAL v.021</div>
+    </div>
+
+    <!-- Intro -->
+    <div class="intro-banner">
+        <b>¡Bienvenido a Astro Chess!</b> Una experiencia de ajedrez dinámico creada para el navegador que combina la estrategia milenaria de los 64 escaques con la emoción visual, el ritmo cinematográfico y el feedback táctil de los juegos móviles modernos (<i>Supercell & Marvel Snap</i>).
+    </div>
+
+    <!-- Modos de Juego -->
+    <div class="section-title">🎮 1. Modos de Juego Disponibles</div>
+    <div class="grid-3">
+        <div class="card">
+            <div class="card-title">🤖 vs. CPU</div>
+            <p>Juega partidas rápidas contra la inteligencia artificial. Incluye selector de dificultad (Fácil / Medio) con jugadas tácticas ponderadas.</p>
+        </div>
+        <div class="card">
+            <div class="card-title">🏟️ La Plaza (Solo Hub)</div>
+            <p>Enfréntate a maestros rivales con nombres, biografías, avatares y clasificaciones ELO únicas (Edward, Himiko, Wolfgang, Haruka, etc.).</p>
+        </div>
+        <div class="card">
+            <div class="card-title">👥 Partida Local</div>
+            <p>Modo clásico de 2 jugadores en el mismo dispositivo. Ideal para partidas cara a cara con control de tiempo Blitz o Clásico.</p>
+        </div>
+    </div>
+
+    <!-- Royal Announcer -->
+    <div class="section-title">📢 2. Royal Announcer — Emoción en Tiempo Real</div>
+    <p style="font-size: 8.5pt; color: #94a3b8; margin-bottom: 6px;">
+        Inspirado en los anuncios legendarios de <i>League of Legends</i>, pero contextualizado en una guerra de reinos dinásticos:
+    </p>
+    <table class="announcer-table">
+        <thead>
+            <tr>
+                <th style="width: 32%;">Llamada del Anunciador</th>
+                <th style="width: 38%;">Condición de Activación</th>
+                <th style="width: 30%;">Subtítulo Temático</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="callout-badge bg-crimson">🩸 FIRST BLOOD</span></td>
+                <td>Primera baja de toda la partida</td>
+                <td><i>The clash of realms begins</i></td>
+            </tr>
+            <tr>
+                <td><span class="callout-badge bg-queen">👑 QUEENSLAYER</span></td>
+                <td>Caída de la Dama enemiga</td>
+                <td><i>The rival court falls to ruin</i></td>
+            </tr>
+            <tr>
+                <td><span class="callout-badge bg-amber">⚔ RETALIATION</span></td>
+                <td>Recaptura inmediata en venganza</td>
+                <td><i>An eye for an eye in the realm</i></td>
+            </tr>
+            <tr>
+                <td><span class="callout-badge bg-blue">⚡ DOUBLE STRIKE</span></td>
+                <td>2 capturas consecutivas del mismo bando</td>
+                <td><i>Breaching the frontline</i></td>
+            </tr>
+            <tr>
+                <td><span class="callout-badge bg-amber">🔥 ROYAL RAMPAGE</span></td>
+                <td>3 capturas consecutivas en racha</td>
+                <td><i>Enemy vanguard collapsing</i></td>
+            </tr>
+            <tr>
+                <td><span class="callout-badge bg-purple">✦ DYNASTIC SUPREMACY ✦</span></td>
+                <td>5+ bajas consecutivas (Pentakill)</td>
+                <td><i>Unstoppable imperial conquest</i></td>
+            </tr>
+            <tr>
+                <td><span class="callout-badge bg-blue">🏰 TOWER BREAKER</span></td>
+                <td>Derribo de una Torre enemiga</td>
+                <td><i>Piece took down the Rook</i></td>
+            </tr>
+            <tr>
+                <td><span class="callout-badge bg-amber">⚔ SIEGE STRIKE</span></td>
+                <td>Captura simultánea con Jaque</td>
+                <td><i>King pressured under assault</i></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Experiencia Visual y Smartphone Feel -->
+    <div class="section-title">📱 3. Experiencia Visual & Pantalla de Victoria Coreografiada</div>
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-title">🏆 Pantalla Final Coreografiada</div>
+            <ul>
+                <li><b>Aparición en secuencia</b>: La corona y el título emergen con rebote elástico.</li>
+                <li><b>Cascada de 6 Tarjetas</b>: Turnos, Tiempo, Pieza Favorita, Capturas, Jaques y Puntos entran uno tras otro.</li>
+                <li><b>Conteo en Vivo</b>: Números y tiempo giran en tiempo real con micro-ticks táctiles.</li>
+                <li><b>Sello de ELO</b>: Estampado con resplandor verde esmeralda o rojo.</li>
+                <li><b>Fast-Forward</b>: Toca la tarjeta para saltar animaciones instantáneamente.</li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-title">✨ Sensación Táctica en el Tablero</div>
+            <ul>
+                <li><b>Aura Activa de Turno</b>: El jugador en turno resplandece en azul cósmico; el inactivo se atenúa para claridad instantánea.</li>
+                <li><b>Puntos en Resorte</b>: Los movimientos válidos brotan con física líquida elástica (<i>Spring Spawn</i>).</li>
+                <li><b>Anillos de Captura</b>: Pulso tenso y vibrante en las casillas objetivo.</li>
+                <li><b>Move Timeline</b>: Registro en vivo de cada movimiento en notación algebraica.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Guía Paso a Paso -->
+    <div class="section-title">🕹️ 4. Guía Rápida: Cómo Jugar</div>
+    <div class="steps-row">
+        <div class="step-box">
+            <div class="step-num">PASO 1</div>
+            <div class="step-title">Elige el Modo</div>
+            <div class="step-desc">Selecciona <i>vs. CPU</i> para practicar o entra a <i>La Plaza</i> para retar rivales con ELO.</div>
+        </div>
+        <div class="step-box">
+            <div class="step-num">PASO 2</div>
+            <div class="step-title">Fija tu Tiempo</div>
+            <div class="step-desc">Escoge entre 1m (Bullet), 3m (Blitz), 5m (Rápido) o 10m (Clásico) en el menú.</div>
+        </div>
+        <div class="step-box">
+            <div class="step-num">PASO 3</div>
+            <div class="step-title">Juega y Conquista</div>
+            <div class="step-desc">Toca tu pieza, sigue los puntos brillantes y desata rachas épicas del Announcer.</div>
+        </div>
+        <div class="step-box">
+            <div class="step-num">PASO 4</div>
+            <div class="step-title">Sube de ELO</div>
+            <div class="step-desc">Gana partidas para desbloquear rivales en La Plaza y conseguir logros únicos.</div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <span><b>Astro Chess</b> — Diseñado y desarrollado con pasión por: <i>theAstroBruh ~</i></span>
+        <span>Ajedrez Cósmico Moderno • 2026</span>
+    </div>
+
+</body>
+</html>

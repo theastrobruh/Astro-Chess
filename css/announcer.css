@@ -1,0 +1,396 @@
+/* =========================================================
+   announcer.css — Royal Announcer & Move Timeline  (v.002)
+   ========================================================= */
+
+/* ══════════════════════════════════════════════════════════
+   ROYAL ANNOUNCER — banner superior elegante y translúcido
+   ══════════════════════════════════════════════════════════ */
+
+.kill-announcer {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 1500; /* Debajo de los modales (z-index 2000+) */
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.kill-announcer.hidden { display: none !important; }
+
+/* Contenedor tipo píldora / ribbon translúcido */
+.ka-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 9px 28px 8px;
+    border-radius: 999px;
+    background: rgba(13, 19, 36, 0.45); /* Alta transparencia para no oscurecer el fondo */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    text-align: center;
+    transform: translateY(-16px) scale(0.96);
+    opacity: 0;
+    max-width: 90vw;
+}
+
+/* Animaciones suaves desde la parte superior */
+@keyframes kaDropIn {
+    0%   { transform: translateY(-20px) scale(0.92); opacity: 0; }
+    60%  { transform: translateY(2px) scale(1.02);   opacity: 0.95; }
+    100% { transform: translateY(0) scale(1);        opacity: 0.90; }
+}
+
+@keyframes kaDropOut {
+    0%   { transform: translateY(0) scale(1);        opacity: 0.90; }
+    100% { transform: translateY(-14px) scale(0.95); opacity: 0; }
+}
+
+.kill-announcer.ka-pop {
+    opacity: 1;
+}
+
+.kill-announcer.ka-pop .ka-inner {
+    animation: kaDropIn 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.kill-announcer.ka-fade {
+    opacity: 1;
+}
+
+.kill-announcer.ka-fade .ka-inner {
+    animation: kaDropOut 0.28s ease-in forwards;
+}
+
+/* Texto del aviso */
+.ka-label {
+    font-family: 'Cinzel', 'Orbitron', Georgia, serif;
+    font-size: clamp(0.95rem, 2.8vw, 1.35rem);
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    line-height: 1.15;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.ka-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(0.65rem, 1.8vw, 0.78rem);
+    font-weight: 600;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+/* ── Estilos por Tier (Sutiles, nobles y con gradientes suaves) ── */
+
+/* Tier 1 — Minor Skirmish */
+.tier-1 .ka-inner {
+    background: rgba(15, 23, 42, 0.45);
+    border-color: rgba(148, 163, 184, 0.25);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.30);
+}
+.tier-1 .ka-label { color: #cbd5e1; }
+.tier-1 .ka-sub   { color: #94a3b8; }
+
+/* Tier 2 — Tactical / Flank Strike */
+.tier-2 .ka-inner {
+    background: rgba(14, 30, 55, 0.50);
+    border-color: rgba(56, 189, 248, 0.40);
+    box-shadow: 0 6px 24px rgba(56, 189, 248, 0.18);
+}
+.tier-2 .ka-label { color: #7dd3fc; }
+.tier-2 .ka-sub   { color: #bae6fd; }
+
+/* Tier 3 — Double Strike / Tower Breaker */
+.tier-3 .ka-inner {
+    background: rgba(12, 38, 30, 0.50);
+    border-color: rgba(52, 211, 153, 0.40);
+    box-shadow: 0 6px 24px rgba(52, 211, 153, 0.20);
+}
+.tier-3 .ka-label { color: #6ee7b7; }
+.tier-3 .ka-sub   { color: #a7f3d0; }
+
+/* Tier 4 — Royal Rampage / Siege */
+.tier-4 .ka-inner {
+    background: rgba(38, 26, 10, 0.52);
+    border-color: rgba(251, 191, 36, 0.45);
+    box-shadow: 0 8px 28px rgba(251, 191, 36, 0.22);
+}
+.tier-4 .ka-label { color: #fde047; }
+.tier-4 .ka-sub   { color: #fef08a; }
+
+/* Tier 5 — Dominating / Realm Domination */
+.tier-5 .ka-inner {
+    background: rgba(48, 18, 10, 0.55);
+    border-color: rgba(249, 115, 22, 0.50);
+    box-shadow: 0 8px 32px rgba(249, 115, 22, 0.25);
+}
+.tier-5 .ka-label { color: #fb923c; }
+.tier-5 .ka-sub   { color: #fed7aa; }
+
+/* Tier 6 — Warlord / Imperial Tyranny */
+.tier-6 .ka-inner {
+    background: rgba(54, 12, 26, 0.55);
+    border-color: rgba(244, 63, 94, 0.55);
+    box-shadow: 0 8px 34px rgba(244, 63, 94, 0.28);
+}
+.tier-6 .ka-label { color: #fb7185; }
+.tier-6 .ka-sub   { color: #fecdd3; }
+
+/* Tier 7 — Dynastic Supremacy */
+.tier-7 .ka-inner {
+    background: rgba(38, 12, 60, 0.60);
+    border-color: rgba(192, 132, 252, 0.60);
+    box-shadow: 0 10px 38px rgba(168, 85, 247, 0.32);
+}
+.tier-7 .ka-label {
+    background: linear-gradient(90deg, #f5d0fe, #c084fc, #93c5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.tier-7 .ka-sub { color: #e9d5ff; }
+
+/* First Blood — Crimson & Gold */
+.tier-firstblood .ka-inner {
+    background: rgba(50, 10, 15, 0.60);
+    border-color: rgba(239, 68, 68, 0.60);
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.30);
+}
+.tier-firstblood .ka-label {
+    background: linear-gradient(90deg, #fca5a5, #ef4444, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.tier-firstblood .ka-sub { color: #fecaca; }
+
+/* Retaliation / Counter-Strike — Amber Flame */
+.tier-retaliation .ka-inner {
+    background: rgba(45, 20, 8, 0.55);
+    border-color: rgba(251, 146, 60, 0.55);
+    box-shadow: 0 8px 30px rgba(249, 115, 22, 0.25);
+}
+.tier-retaliation .ka-label { color: #fb923c; }
+.tier-retaliation .ka-sub   { color: #ffedd5; }
+
+/* Queenslayer */
+.tier-queen .ka-inner {
+    background: rgba(50, 12, 45, 0.58);
+    border-color: rgba(236, 72, 153, 0.55);
+    box-shadow: 0 8px 34px rgba(236, 72, 153, 0.28);
+}
+.tier-queen .ka-label {
+    background: linear-gradient(90deg, #fbcfe8, #f472b6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.tier-queen .ka-sub   { color: #fce7f3; }
+
+/* Check */
+.tier-check .ka-inner {
+    background: rgba(30, 24, 12, 0.55);
+    border-color: rgba(251, 191, 36, 0.45);
+    box-shadow: 0 6px 24px rgba(251, 191, 36, 0.20);
+}
+.tier-check .ka-label { color: #fde047; }
+.tier-check .ka-sub   { color: #fef9c3; }
+
+/* Promotion */
+.tier-promo .ka-inner {
+    background: rgba(22, 22, 60, 0.55);
+    border-color: rgba(129, 140, 248, 0.50);
+    box-shadow: 0 6px 26px rgba(129, 140, 248, 0.22);
+}
+.tier-promo .ka-label { color: #a5b4fc; }
+.tier-promo .ka-sub   { color: #e0e7ff; }
+
+/* Castling */
+.tier-castle .ka-inner {
+    background: rgba(18, 26, 42, 0.50);
+    border-color: rgba(148, 163, 184, 0.35);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+.tier-castle .ka-label { color: #cbd5e1; }
+.tier-castle .ka-sub   { color: #e2e8f0; }
+
+/* En Passant */
+.tier-ep .ka-inner {
+    background: rgba(16, 36, 32, 0.50);
+    border-color: rgba(52, 211, 153, 0.35);
+    box-shadow: 0 6px 22px rgba(52, 211, 153, 0.18);
+}
+.tier-ep .ka-label { color: #6ee7b7; }
+.tier-ep .ka-sub   { color: #a7f3d0; }
+
+
+/* ══════════════════════════════════════════════════════════
+   MOVE TIMELINE — en la parte superior del tablero
+   ══════════════════════════════════════════════════════════ */
+
+#timeline-wrapper {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 2px;
+}
+
+.tl-header {
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    color: var(--text-muted, #64748b);
+    text-align: center;
+    opacity: 0.85;
+}
+
+#move-timeline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 5px;
+    max-height: 52px; /* Altura compacta para no apretar el tablero */
+    overflow-y: auto;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.22); /* Más translúcido */
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    scroll-behavior: smooth;
+    align-content: flex-start;
+}
+
+#move-timeline::-webkit-scrollbar { width: 3px; }
+#move-timeline::-webkit-scrollbar-track { background: transparent; }
+#move-timeline::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 3px; }
+
+.tl-empty {
+    font-size: 0.70rem;
+    color: var(--text-muted, #64748b);
+    font-style: italic;
+    text-align: center;
+    width: 100%;
+    padding: 3px 0;
+}
+
+/* Chips de jugadas */
+.tl-entry {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 0.4px;
+    border: 1px solid transparent;
+    animation: tlSlideIn 0.2s ease-out forwards;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+@keyframes tlSlideIn {
+    from { opacity: 0; transform: translateY(-3px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tl-white {
+    background: rgba(241, 245, 249, 0.08);
+    border-color: rgba(241, 245, 249, 0.12);
+    color: #e2e8f0;
+}
+
+.tl-black {
+    background: rgba(71, 85, 105, 0.15);
+    border-color: rgba(71, 85, 105, 0.25);
+    color: #94a3b8;
+}
+
+.tl-capture {
+    border-color: rgba(249, 115, 22, 0.35) !important;
+}
+.tl-white.tl-capture { background: rgba(249, 115, 22, 0.10); }
+.tl-black.tl-capture { background: rgba(249, 115, 22, 0.07); }
+
+.tl-check {
+    border-color: rgba(251, 191, 36, 0.45) !important;
+}
+
+.tl-mate {
+    border-color: rgba(239, 68, 68, 0.55) !important;
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #fca5a5 !important;
+}
+
+.tl-num {
+    font-size: 0.58rem;
+    color: var(--text-muted, #64748b);
+    min-width: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+}
+
+.tl-piece-icon {
+    font-size: 0.65rem;
+    opacity: 0.75;
+}
+
+.tl-move {
+    font-size: 0.72rem;
+}
+
+.tl-cap-icon {
+    font-size: 0.55rem;
+    opacity: 0.5;
+    margin-left: 1px;
+}
+
+.tl-badge {
+    font-size: 0.55rem;
+    font-weight: 800;
+    padding: 0 3px;
+    border-radius: 4px;
+    line-height: 1.3;
+}
+
+.tl-badge-check  { background: rgba(251, 191, 36, 0.22); color: #fbbf24; }
+.tl-badge-mate   { background: rgba(239, 68, 68, 0.25);  color: #ef4444; }
+.tl-badge-castle { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+.tl-badge-promo  { background: rgba(99, 102, 241, 0.22); color: #818cf8; }
+.tl-badge-ep     { background: rgba(52, 211, 153, 0.18); color: #34d399; font-family: 'Inter', sans-serif; }
+
+/* Responsive */
+@media (max-width: 480px) {
+    .kill-announcer { top: 12px; }
+    .ka-inner       { padding: 7px 18px 6px; }
+    .ka-label       { font-size: 0.95rem; }
+    #move-timeline  { max-height: 44px; padding: 3px 6px; }
+    .tl-entry       { font-size: 0.65rem; padding: 1px 4px; }
+}
+
+@media (max-height: 700px) {
+    #move-timeline  { max-height: 38px; }
+}
+
+@media (max-height: 600px) {
+    #timeline-wrapper { display: none; }
+}
+
+@media (min-width: 768px) {
+    .kill-announcer { top: 28px; }
+    #move-timeline  { max-height: 65px; }
+    .tl-entry       { font-size: 0.78rem; padding: 2px 7px; }
+}
