@@ -270,7 +270,7 @@ const Experience = (() => {
         );
     }
 
-    /** Expanding reticle where a piece was taken. */
+    /** Expanding reticle + cosmic spark particles where a piece was taken. */
     function captureBurst(r, c) {
         if (prefersReducedMotion()) return;
         const area = document.getElementById('board-area');
@@ -286,6 +286,69 @@ const Experience = (() => {
         ring.style.top    = (pos.y - size / 2) + 'px';
         area.appendChild(ring);
         window.setTimeout(() => ring.remove(), 520);
+
+        // Cosmic spark particles radiating outward
+        const count = 10;
+        const colors = ['#7dd3fc', '#fde047', '#ffffff', '#c084fc'];
+        for (let i = 0; i < count; i++) {
+            const spark = document.createElement('span');
+            const pSize = 3 + Math.random() * 3.5;
+            const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+            const dist  = size * (0.45 + Math.random() * 0.45);
+            const dx    = Math.cos(angle) * dist;
+            const dy    = Math.sin(angle) * dist;
+            const color = colors[i % colors.length];
+
+            spark.style.cssText =
+                `position:absolute;pointer-events:none;z-index:12;border-radius:50%;` +
+                `width:${pSize}px;height:${pSize}px;` +
+                `left:${pos.x - pSize / 2}px;top:${pos.y - pSize / 2}px;` +
+                `background:${color};box-shadow:0 0 6px ${color};`;
+            area.appendChild(spark);
+
+            const anim = spark.animate(
+                [
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${dx}px, ${dy}px) scale(0.15)`, opacity: 0 }
+                ],
+                { duration: 420 + Math.random() * 140, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
+            );
+            anim.onfinish = () => spark.remove();
+        }
+    }
+
+    /** Subtle star-dust trail along a piece's slide path. */
+    function moveTrail(from, to) {
+        if (prefersReducedMotion() || !from || !to) return;
+        const area = document.getElementById('board-area');
+        const p1 = _squareCentre(from.r, from.c);
+        const p2 = _squareCentre(to.r, to.c);
+        if (!area || !p1 || !p2) return;
+
+        const steps = 4;
+        for (let i = 1; i <= steps; i++) {
+            const t = i / (steps + 1);
+            const x = p1.x + (p2.x - p1.x) * t + (Math.random() - 0.5) * 6;
+            const y = p1.y + (p2.y - p1.y) * t + (Math.random() - 0.5) * 6;
+            const dot = document.createElement('span');
+            const dSize = 3 + Math.random() * 2;
+
+            dot.style.cssText =
+                `position:absolute;pointer-events:none;z-index:3;border-radius:50%;` +
+                `width:${dSize}px;height:${dSize}px;` +
+                `left:${x - dSize / 2}px;top:${y - dSize / 2}px;` +
+                `background:rgba(165,243,252,0.85);box-shadow:0 0 6px rgba(125,211,252,0.7);`;
+            area.appendChild(dot);
+
+            const anim = dot.animate(
+                [
+                    { transform: 'scale(1)', opacity: 0.75 },
+                    { transform: 'scale(0.2)', opacity: 0 }
+                ],
+                { duration: 280 + i * 35, delay: i * 22, easing: 'ease-out', fill: 'forwards' }
+            );
+            anim.onfinish = () => dot.remove();
+        }
     }
 
     /** Light haptic tick on supporting devices. */
@@ -1041,6 +1104,7 @@ const Experience = (() => {
         updateMaterial,
         pieceLanded,
         captureBurst,
+        moveTrail,
         haptic,
         togglePause,
         isPaused: () => _paused,
@@ -1064,6 +1128,7 @@ window.__astroTurnChange = function (currentPlayer, captured) {
 };
 window.__astroMoveFX = function (from, to, captured) {
     if (typeof Experience === 'undefined') return;
+    Experience.moveTrail(from, to);
     if (captured) {
         Experience.captureBurst(to.r, to.c);
         Experience.haptic(14);

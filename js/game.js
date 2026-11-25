@@ -511,15 +511,6 @@ function _handleTimeout(winner) {
 function _showGameEndModal(result) {
     // v.021: a finished game is no longer resumable
     clearSavedGame();
-    if (typeof Analytics !== 'undefined') {
-        Analytics.track('game_end', {
-            mode: gameMode,
-            difficulty: gameMode === 'cpu' ? cpuDifficulty : null,
-            result: gameResult,
-            moves: moveCount,
-            duration
-        });
-    }
 
     const profile    = ProfileSystem.getProfile();
     const duration   = gameStartTime ? Math.round((Date.now() - gameStartTime) / 1000) : 0;
@@ -531,6 +522,16 @@ function _showGameEndModal(result) {
     if (result.winner === 'w')       gameResult = 'win';
     else if (result.winner === 'b')  gameResult = 'loss';
     else                              gameResult = 'draw';   // stalemate / timeout draw
+
+    if (typeof Analytics !== 'undefined') {
+        Analytics.track('game_end', {
+            mode: gameMode,
+            difficulty: gameMode === 'cpu' ? cpuDifficulty : null,
+            result: gameResult,
+            moves: moveCount,
+            duration
+        });
+    }
 
     // v.011: find most used piece
     let mostUsedPiece = null;

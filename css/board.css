@@ -5,12 +5,13 @@
 
 /* ── Board Wrapper — glassmorphism semi-transparent ── */
 #board-wrapper {
-    width: 100%;
-    /* Stay square while respecting height constraints */
+    width: min(100%, 54vh);
+    width: min(100%, 54dvh);
+    /* Stay square while respecting both width and height constraints */
     aspect-ratio: 1 / 1;
-    max-height: 52vh;
-    max-width: 52vh;
+    max-width: 100%;
     align-self: center;
+    flex-shrink: 0;
 
     /* More transparent so the starfield shines through clearly */
     background: rgba(20, 30, 50, 0.15);
@@ -30,6 +31,7 @@
     width: 100%;
     height: 100%;
     position: relative;
+    container-type: size;
 }
 
 /* ── Chessboard Grid ── */
@@ -168,7 +170,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: clamp(20px, 6.5vw, 50px);
+    font-size: clamp(18px, 6.2vmin, 48px);
+    font-size: clamp(18px, 7.8cqw, 52px);
+    line-height: 1;
 
     /* Critical: contain children so images never overflow the cell */
     overflow: hidden;
@@ -201,11 +205,14 @@
 .piece.piece-img {
     font-size: 0;           /* hide any text / FA fallback */
     color: transparent;
-    padding: 0;
+    padding: 5%;
+    box-sizing: border-box;
 
     /* Constrain the <img> element itself when it IS the .piece */
-    max-width: 100%;
-    max-height: 100%;
+    width: 12.5%;
+    height: 12.5%;
+    max-width: 12.5%;
+    max-height: 12.5%;
     object-fit: contain;
     display: block;
     user-select: none;
@@ -232,6 +239,10 @@
     display: block;
     user-select: none;
     -webkit-user-drag: none;
+}
+
+.piece:hover {
+    transform: scale(1.06);
 }
 
 .piece:active {
@@ -262,16 +273,17 @@
 /* ── Responsive adjustments ── */
 @media (min-width: 768px) {
     #board-wrapper {
-        max-height: 70vh;
-        max-width: 70vh;
+        width: min(100%, 68vh);
+        width: min(100%, 68dvh);
+        max-width: 680px;
     }
 }
 
 @media (max-width: 480px) {
     #board-wrapper {
-        max-height: none;
-        max-width: none;
-        width: 100%;
+        width: min(100%, 54vh);
+        width: min(100%, 54dvh);
+        max-width: 100%;
     }
 
     /* Extra safety for PNG pieces on narrow mobile viewports */
@@ -289,15 +301,15 @@
 
 @media (max-height: 700px) {
     #board-wrapper {
-        max-height: 46vh;
-        max-width: 46vh;
+        width: min(100%, 48vh);
+        width: min(100%, 48dvh);
     }
 }
 
 @media (max-height: 620px) {
     #board-wrapper {
-        max-height: 42vh;
-        max-width: 42vh;
+        width: min(100%, 44vh);
+        width: min(100%, 44dvh);
     }
 }
 
